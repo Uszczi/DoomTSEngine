@@ -1,37 +1,21 @@
-async function load_wad(wad_path: string) {
-  const wad_buffer = await Bun.file(wad_path).arrayBuffer();
-  const wad_dataview = new DataView(wad_buffer);
+import { Wad } from "./engine/wad";
+import { parseMap } from "./engine/map";
 
-  const wad_type_uint32 = wad_dataview.getUint32(0, true);
-  const wad_type = String.fromCharCode(
-    wad_type_uint32 & 0xff,
-    (wad_type_uint32 >> 8) & 0xff,
-    (wad_type_uint32 >> 16) & 0xff,
-    (wad_type_uint32 >> 24) & 0xff,
-  );
-  const wad_lumps_number = wad_dataview.getUint32(4, true);
-  const wad_dir_offset = wad_dataview.getUint32(8, true);
+for (const file of ["./DOOM.WAD", "./DOOM64.WAD", "./10sector.wad"]) {
+  const wad = new Wad(await Bun.file(file).arrayBuffer());
+  // console.log(wad.mapNames());
 
-  return {
-    wad_type,
-    wad_lumps_number,
-    wad_dir_offset,
-  };
+  const names = wad.mapNames();
+  const name = names[Math.floor(Math.random() * names.length)];
+
+  const map = parseMap(wad, name);
+  console.log(`map.name = ${map.name}`);
+  console.log(`map.vertices.length = ${map.vertices.length}`);
+  console.log(`map.things.length = ${map.things.length}`);
+  console.log(`map.linedefs.length = ${map.linedefs.length}`);
+
+  console.log(map.linedefs);
+  console.log();
 }
-
-function print_wad(wad_info: any) {
-  console.log(wad_info.wad_type);
-  console.log(wad_info.wad_lumps_number);
-  console.log(wad_info.wad_dir_offset);
-}
-
-const wad_info_iwad = await load_wad("./DOOM.WAD");
-print_wad(wad_info_iwad);
-
-const wad_info_iwad2 = await load_wad("./DOOM64.WAD");
-print_wad(wad_info_iwad2);
-
-const wad_info_pwad = await load_wad("./10sector.wad");
-print_wad(wad_info_pwad);
 
 export {};
