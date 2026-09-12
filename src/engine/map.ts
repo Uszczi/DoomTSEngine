@@ -34,18 +34,18 @@ export function parseMap(wad: Wad, mapName: string): MapData {
   if (!wad.has(mapName)) throw new Error(`Map not found: ${mapName}`);
 
   let vertices: Vertex[] = [];
-  if (wad.has("VERTEXES")) {
-    vertices = parseVertices(wad.readLump("VERTEXES"));
+  if (wad.hasMapLump(mapName, "VERTEXES")) {
+    vertices = parseVertices(wad.readMapLump(mapName, "VERTEXES"));
   }
 
   let linedefs: Linedef[] = [];
-  if (wad.has("LINEDEFS")) {
-    linedefs = parseLinedefs(wad.readLump("LINEDEFS"));
+  if (wad.hasMapLump(mapName, "LINEDEFS")) {
+    linedefs = parseLinedefs(wad.readMapLump(mapName, "LINEDEFS"));
   }
 
   let things: Thing[] = [];
-  if (wad.has("THINGS")) {
-    things = parseThings(wad.readLump("THINGS"));
+  if (wad.hasMapLump(mapName, "THINGS")) {
+    things = parseThings(wad.readMapLump(mapName, "THINGS"));
   }
 
   const bounds = vertices.reduce(

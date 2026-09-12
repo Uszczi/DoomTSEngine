@@ -3,9 +3,20 @@ export interface LumpEntry {
   size: number;
 }
 
+interface Lump extends LumpEntry {
+  name: string;
+}
+
+const MAP_NAME_RE = /^(MAP[0-3][0-9]|E[1-4]M[1-9])$/;
+
+function isMapName(name: string): boolean {
+  return MAP_NAME_RE.test(name);
+}
+
 export class Wad {
   private buffer: ArrayBuffer;
   private view: DataView;
+  private lumps: Lump[] = [];
   private lumpIndex = new Map<string, LumpEntry>();
   readonly type: string;
   readonly numLumps: number;
@@ -43,7 +54,9 @@ export class Wad {
         this.view.getUint8(off + 14),
         this.view.getUint8(off + 15),
       ).replace(/\0.*$/, "");
-      this.lumpIndex.set(name, { offset: lumpOffset, size });
+      const entry = { offset: lumpOffset, size };
+      this.lumps.push({ name, ...entry });
+      this.lumpIndex.set(name, entry);
     }
   }
 
@@ -62,8 +75,28 @@ export class Wad {
   }
 
   mapNames(): string[] {
-    return [...this.lumpIndex.keys()].filter((n) =>
-      /^(MAP[0-3][0-9]|E[1-4]M[1-9])$/.test(n),
-    );
+    return [...this.lumpIndex.keys()].filter(isMapName);
+  }
+
+  private mapLumps(mapName: string): Lump[] {
+    const mapIndex = this.lumps.findIndex((l) => l.name === mapName);
+    if (mapIndex === -1) throw new Error(`Map not found: ${mapName}`);
+    const out: Lump[] = [];
+    for (let i = mapIndex + 1; i < this.lumps.length; i++) {
+      const lump = this.lumps[i];
+      if (isMapName(lump.name)) break;
+      out.push(lump);
+    }
+    return out;
+  }
+
+  hasMapLump(mapName: string, lumpName: string): boolean {
+    return this.mapLumps(mapName).some((l) => l.name === lumpName);
+  }
+
+  readMapLump(mapName: string, lumpName: string): Uint8Array {
+    const lump = this.mapLumps(mapName).find((l) => l.name === lumpName);
+    if (!lump) throw new Error(`Lump not found: ${lumpName}`);
+    return new Uint8Array(this.buffer, lump.offset, lump.size);
   }
 }
