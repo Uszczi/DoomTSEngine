@@ -21,5 +21,8 @@
   "type": "module",
   "devDependencies": {
     "@types/bun": "^1.4.2"
+  },
+  "dependencies": {
+    "hono": "^4.13.7"
   }
 }
